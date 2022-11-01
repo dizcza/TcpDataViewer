@@ -7,7 +7,10 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.os.*
+import android.os.Binder
+import android.os.Build
+import android.os.IBinder
+import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
@@ -15,12 +18,9 @@ import java.io.DataInputStream
 import java.io.IOException
 import java.net.InetAddress
 import java.net.Socket
-import java.util.concurrent.atomic.AtomicLong
-import kotlin.math.roundToLong
 
 class TcpClientService : Service() {
     private lateinit var thread: Thread
-    private val bitrate = AtomicLong(0)
 
     // Binder given to clients
     private val binder = TcpBinder()
@@ -34,8 +34,7 @@ class TcpClientService : Service() {
         fun getService(): TcpClientService = this@TcpClientService
     }
 
-    private inner class TcpRunnable(handler: Handler, lineChart: SensorLineChart) : Runnable {
-        val mHandler: Handler = handler  // TODO not needed
+    private inner class TcpRunnable(lineChart: SensorLineChart) : Runnable {
         val mLineChart: SensorLineChart = lineChart
 
         override fun run() {
@@ -50,9 +49,6 @@ class TcpClientService : Service() {
 
                 val buffer = ByteArray(Constants.BUFFER_SIZE)
 
-                val start = System.currentTimeMillis()
-                var readTotal = 0;
-
                 while (!Thread.currentThread().isInterrupted) {
                     try {
                         val readBytes = dataInputStream.read(buffer);
@@ -61,11 +57,6 @@ class TcpClientService : Service() {
                         }
                         val bufferChunk = buffer.copyOfRange(0, readBytes)
                         mLineChart.update(bufferChunk)
-
-                        readTotal += readBytes;
-                        val msSinceStart = System.currentTimeMillis() - start;
-                        val bitrateAsDouble : Double = readTotal * 1000.0 / msSinceStart
-                        bitrate.set(bitrateAsDouble.roundToLong())
                     } catch (e: IOException) {
                         e.printStackTrace()
                         try {
@@ -98,15 +89,11 @@ class TcpClientService : Service() {
         return binder
     }
 
-    fun startDaemonThread(handler: Handler, lineChart: SensorLineChart) {
+    fun startDaemonThread(lineChart: SensorLineChart) {
         startMeForeground()
-        thread = Thread(TcpRunnable(handler, lineChart))
+        thread = Thread(TcpRunnable(lineChart))
         thread.isDaemon = true
         thread.start()
-    }
-
-    fun getBitrate() : Long {
-        return bitrate.get()
     }
 
     override fun onDestroy() {

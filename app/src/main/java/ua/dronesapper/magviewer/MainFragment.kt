@@ -31,6 +31,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
+import com.github.mikephil.charting.charts.LineChart
 import ua.dronesapper.magviewer.TcpClientService.TcpBinder
 import java.io.File
 import java.io.FileOutputStream
@@ -38,6 +39,7 @@ import java.io.IOException
 import java.io.PrintWriter
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.collections.ArrayList
 
 /**
  * This fragment controls Bluetooth to communicate with other devices.
@@ -50,9 +52,6 @@ class MainFragment : Fragment() {
 
     private val mServiceConnection = ServiceConnectionTcp()
     private var mService: TcpClientService? = null
-    private val mTimer = Timer()
-    private lateinit var mHandler: MessageHandler
-    private var mBound = false
 
     private inner class BackStackChanged : FragmentManager.OnBackStackChangedListener {
         private var mChartWasActive = false
@@ -71,14 +70,6 @@ class MainFragment : Fragment() {
                 // Main fragment is replaced by the SavedChartsFragment
                 mChartWasActive = mLineChart!!.isActive
                 mLineChart!!.pause()
-            }
-        }
-    }
-
-    private inner class MessageHandler(looper: Looper?) : Handler(looper!!) {
-        override fun handleMessage(msg: Message) {
-            when (msg.what) {
-                Constants.MESSAGE_READ -> onRecordsReceived(msg.obj as ByteArray)
             }
         }
     }
@@ -120,24 +111,16 @@ class MainFragment : Fragment() {
         override fun onServiceConnected(name: ComponentName, service: IBinder) {
             val binder = service as TcpBinder
             mService = binder.getService()
-            mService!!.startDaemonThread(mHandler, mLineChart!!)
-            mBound = true
-            mTimer.scheduleAtFixedRate(object : TimerTask() {
-                override fun run() {
-                    Log.d(TAG, "Bitrate " + mService!!.getBitrate())
-                }
-            }, 0, 2000)
+            mService!!.startDaemonThread(mLineChart!!)
         }
 
         override fun onServiceDisconnected(name: ComponentName) {
             Log.d(TAG, "onServiceDisconnected")
-            mBound = false
         }
 
         override fun onBindingDied(name: ComponentName) {
             Log.d(TAG, "onBindingDied")
             requireContext().unbindService(this)
-            mBound = false
         }
     }
 
@@ -146,8 +129,7 @@ class MainFragment : Fragment() {
         setHasOptionsMenu(true)
     }
 
-    fun startService() {
-        mHandler = MessageHandler(Looper.getMainLooper())
+    private fun startService() {
         val intent = Intent(context, TcpClientService::class.java)
         requireContext().bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE)
         parentFragmentManager.addOnBackStackChangedListener(BackStackChanged())
@@ -155,9 +137,7 @@ class MainFragment : Fragment() {
 
     override fun onStop() {
         super.onStop()
-        mTimer.cancel()
         requireContext().unbindService(mServiceConnection)
-        mBound = false
     }
 
     override fun onCreateView(
@@ -193,10 +173,6 @@ class MainFragment : Fragment() {
         }
 
         startService()
-    }
-
-    private fun onRecordsReceived(bytes: ByteArray) {
-        mLineChart!!.update(bytes)
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {

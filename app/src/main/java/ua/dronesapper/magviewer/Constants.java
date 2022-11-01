@@ -22,6 +22,5 @@ package ua.dronesapper.magviewer;
 public interface Constants {
     int BUFFER_SIZE = 1024;
     int DEQUEUE_SIZE = 100;
-    int MESSAGE_READ = 2;
     String RECORDS_FOLDER = "SensorRecords";
 }
