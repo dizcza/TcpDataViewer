@@ -1,3 +1,9 @@
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_name">MagViewer</string>
+
+    <!-- Options Menu -->
+    <string name="save_btn">Save</string>
+    <string name="show_saved">Show saved charts</string>
+    <string name="tag_save_hint">Tag</string>
+
 </resources>

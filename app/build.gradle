@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'ua.dronesapper.magneticviewer'
+    namespace 'ua.dronesapper.magviewer'
     compileSdk 33
 
     defaultConfig {
-        applicationId "ua.dronesapper.magneticviewer"
+        applicationId "ua.dronesapper.magviewer"
         minSdk 21
         //noinspection ExpiredTargetSdkVersion
         targetSdk 30
@@ -38,4 +38,5 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.appcompat:appcompat:1.5.1'
     implementation 'com.google.android.material:material:1.7.0'
+    implementation "com.github.AppDevNext:MPAndroidChart:3.1.0.9"
 }

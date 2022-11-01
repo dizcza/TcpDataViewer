@@ -1,4 +1,4 @@
-package ua.dronesapper.magneticviewer
+package ua.dronesapper.magviewer
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -29,13 +29,13 @@ class TcpClientService : Service() {
      * Class used for the client Binder.  Because we know this service always
      * runs in the same process as its clients, we don't need to deal with IPC.
      */
-    inner class LocalBinder : Binder() {
+    inner class TcpBinder : Binder() {
         // Return this instance of LocalService so clients can call public methods
         fun getService(): TcpClientService = this@TcpClientService
     }
 
     // Binder given to clients
-    private val binder = LocalBinder()
+    private val binder = TcpBinder()
 
     private val runnable = Runnable {
         Looper.prepare()
