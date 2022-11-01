@@ -185,13 +185,11 @@ public class MainFragment extends Fragment {
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
+    public void onStop() {
+        super.onStop();
+        mTimer.cancel();
+        requireContext().unbindService(mServiceConnection);
+        mBound = false;
     }
 
     @Override
