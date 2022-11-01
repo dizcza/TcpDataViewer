@@ -48,7 +48,7 @@ class TcpClientService : Service() {
 
                 Toast.makeText(applicationContext, "Socket opened", Toast.LENGTH_SHORT).show()
 
-                val buffer = ByteArray(5000)
+                val buffer = ByteArray(Constants.BUFFER_SIZE)
 
                 val start = System.currentTimeMillis()
                 var readTotal = 0;

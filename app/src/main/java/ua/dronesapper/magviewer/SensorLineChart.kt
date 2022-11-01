@@ -1,11 +1,10 @@
 package ua.dronesapper.magviewer
 
 import android.content.Context
-import android.content.res.Resources.Theme
-import android.os.Build
 import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
+import androidx.collection.CircularArray
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
@@ -14,9 +13,7 @@ import com.github.mikephil.charting.listener.ChartTouchListener.ChartGesture
 import com.github.mikephil.charting.listener.OnChartGestureListener
 
 class SensorLineChart : LineChart, OnChartGestureListener {
-    private val TAG = SensorLineChart::class.java.simpleName
-    private val mChartEntries = arrayOfNulls<Entry>(30)
-    private var mHead = 0;
+    private val mChartEntries = ArrayDeque<Entry>(Constants.DEQUEUE_SIZE)
 
     @get:Synchronized
     val chartEntries: List<Entry>? = null
@@ -50,7 +47,7 @@ class SensorLineChart : LineChart, OnChartGestureListener {
     @Synchronized
     override fun clear() {
         super.clear()
-        mHead = 0;
+        mChartEntries.clear()
         mState = State.CLEARED
     }
 
@@ -66,39 +63,34 @@ class SensorLineChart : LineChart, OnChartGestureListener {
 
     @Synchronized
     fun update(bytes: ByteArray) {
-        val rightEmpty = mChartEntries.size - mHead
-        var remove = bytes.size - rightEmpty
+        var available = Constants.DEQUEUE_SIZE - mChartEntries.size
+        val remove = bytes.size - available
         if (remove > 0) {
             if (remove > mChartEntries.size) {
-                remove = 0
+                mChartEntries.clear()
             } else {
-                for (i in remove until mHead) {
-                    mChartEntries[i - remove] = mChartEntries[i]
+                for (i in 0 until remove) {
+                    mChartEntries.removeFirst()
                 }
             }
-            mHead = remove
         }
 
-        val nWrite = if (bytes.size > mChartEntries.size - mHead) mChartEntries.size - mHead else bytes.size
-        for (i in bytes.size - nWrite until bytes.size) {
+        available = Constants.DEQUEUE_SIZE - mChartEntries.size
+        val start = if (bytes.size < available) 0 else bytes.size - available
+        for (i in start until bytes.size) {
             if (mState != State.INACTIVE) {
                 val entry = Entry(
                     mRecordId++.toFloat(),
                     bytes[i].toFloat()
                 )
-                mChartEntries[mHead++] = entry
+                mChartEntries.addLast(entry)
             }
         }
-
-        for (i in 0 until mHead) {
-            Log.d(TAG, "${mChartEntries[i]?.x}, ${mChartEntries[i]?.y}")
-        }
-        Log.d(TAG, ">>>")
 
         val tick = System.currentTimeMillis()
         if (mState != State.INACTIVE && tick > mLastUpdate + UPDATE_PERIOD_MS) {
             // either CLEARED or ACTIVE state
-            val dataset = LineDataSet(mChartEntries.slice(0 until mHead), CHART_LABEL)
+            val dataset = LineDataSet(mChartEntries.toList(), CHART_LABEL)
             val data = LineData(dataset)
             setData(data)
             invalidate()
