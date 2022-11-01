@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package ua.dronesapper.magviewer;
+package ua.dronesapper.magviewer
 
 /**
  * Defines several constants used between the service and UI.
  */
-public interface Constants {
-    int BUFFER_SIZE = 1024;
-    int DEQUEUE_SIZE = 100;
-    String RECORDS_FOLDER = "SensorRecords";
+interface Constants {
+    companion object {
+        const val BUFFER_SIZE = 1024
+        const val DEQUEUE_SIZE = 100
+        const val RECORDS_FOLDER = "SensorRecords"
+    }
 }
