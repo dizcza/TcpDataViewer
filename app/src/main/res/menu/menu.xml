@@ -21,4 +21,9 @@
         android:title="@string/show_saved"
         app:showAsAction="never" />
 
+    <item
+        android:id="@+id/connect_dialog"
+        android:title="@string/connect_desc"
+        app:showAsAction="never" />
+
 </menu>

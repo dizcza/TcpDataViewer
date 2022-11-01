@@ -5,5 +5,11 @@
     <string name="save_btn">Save</string>
     <string name="show_saved">Show saved charts</string>
     <string name="tag_save_hint">Tag</string>
+    <string name="ipaddr">192.168.3.62</string>
+    <string name="port_desc">Port</string>
+    <string name="tcp_server_ip_address_desc">IP address</string>
+    <string name="connect_desc">Connect to TCP server</string>
+    <string name="dialog_cancel">Cancel</string>
+    <string name="dialog_connect">Save and connect</string>
 
 </resources>

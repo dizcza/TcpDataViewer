@@ -23,5 +23,8 @@ interface Constants {
         const val BUFFER_SIZE = 1024
         const val DEQUEUE_SIZE = 100
         const val RECORDS_FOLDER = "SensorRecords"
+        const val SHARED_KEY_FILE = "ua.dronesapper.magviewer.SHARED_KEY"
+        const val SERVER_IPADDR_SHARED_KEY = "server_ipaddr"
+        const val SERVER_PORT_SHARED_KEY = "server_port"
     }
 }
