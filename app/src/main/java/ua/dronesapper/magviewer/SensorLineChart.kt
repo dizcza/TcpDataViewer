@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.res.Resources.Theme
 import android.os.Build
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.data.Entry
@@ -13,10 +14,13 @@ import com.github.mikephil.charting.listener.ChartTouchListener.ChartGesture
 import com.github.mikephil.charting.listener.OnChartGestureListener
 
 class SensorLineChart : LineChart, OnChartGestureListener {
-    private val mChartEntries: MutableList<Entry> = ArrayList()
+    private val TAG = SensorLineChart::class.java.simpleName
+    private val mChartEntries = arrayOfNulls<Entry>(30)
+    private var mHead = 0;
 
     @get:Synchronized
     val chartEntries: List<Entry>? = null
+
     private var mState = State.CLEARED
     private var mLastUpdate: Long = 0
     private var mRecordId: Long = 0
@@ -46,8 +50,7 @@ class SensorLineChart : LineChart, OnChartGestureListener {
     @Synchronized
     override fun clear() {
         super.clear()
-        mChartEntries.clear()
-        mLastUpdate = System.currentTimeMillis()
+        mHead = 0;
         mState = State.CLEARED
     }
 
@@ -62,25 +65,44 @@ class SensorLineChart : LineChart, OnChartGestureListener {
     }
 
     @Synchronized
-    fun update(bytes: ByteArray, size: Int) {
-        for (i in 0 until size) {
+    fun update(bytes: ByteArray) {
+        val rightEmpty = mChartEntries.size - mHead
+        var remove = bytes.size - rightEmpty
+        if (remove > 0) {
+            if (remove > mChartEntries.size) {
+                remove = 0
+            } else {
+                for (i in remove until mHead) {
+                    mChartEntries[i - remove] = mChartEntries[i]
+                }
+            }
+            mHead = remove
+        }
+
+        val nWrite = if (bytes.size > mChartEntries.size - mHead) mChartEntries.size - mHead else bytes.size
+        for (i in bytes.size - nWrite until bytes.size) {
             if (mState != State.INACTIVE) {
                 val entry = Entry(
                     mRecordId++.toFloat(),
                     bytes[i].toFloat()
                 )
-                mChartEntries.add(entry)
+                mChartEntries[mHead++] = entry
             }
         }
+
+        for (i in 0 until mHead) {
+            Log.d(TAG, "${mChartEntries[i]?.x}, ${mChartEntries[i]?.y}")
+        }
+        Log.d(TAG, ">>>")
+
         val tick = System.currentTimeMillis()
         if (mState != State.INACTIVE && tick > mLastUpdate + UPDATE_PERIOD_MS) {
             // either CLEARED or ACTIVE state
-            val dataset = LineDataSet(ArrayList(mChartEntries), CHART_LABEL)
+            val dataset = LineDataSet(mChartEntries.slice(0 until mHead), CHART_LABEL)
             val data = LineData(dataset)
             setData(data)
             invalidate()
             mLastUpdate = tick
-            mChartEntries.clear()
             mState = State.ACTIVE
         }
     }
@@ -116,7 +138,7 @@ class SensorLineChart : LineChart, OnChartGestureListener {
     override fun onChartTranslate(me: MotionEvent, dX: Float, dY: Float) {}
 
     companion object {
-        private const val UPDATE_PERIOD_MS: Long = 2000
+        private const val UPDATE_PERIOD_MS: Long = 100
         private const val CHART_LABEL = "Magnetic field diff, uT"
     }
 }

@@ -15,6 +15,7 @@ import java.io.DataInputStream
 import java.io.IOException
 import java.net.InetAddress
 import java.net.Socket
+import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.roundToLong
 
@@ -58,7 +59,8 @@ class TcpClientService : Service() {
                         if (readBytes == -1) {
                             throw IOException("Not enough buffer")
                         }
-                        mHandler.obtainMessage(Constants.MESSAGE_READ, readBytes, -1, buffer).sendToTarget()
+                        val bufferChunk = buffer.copyOfRange(0, readBytes)
+                        mHandler.obtainMessage(Constants.MESSAGE_READ, bufferChunk).sendToTarget()
 
                         readTotal += readBytes;
                         val msSinceStart = System.currentTimeMillis() - start;

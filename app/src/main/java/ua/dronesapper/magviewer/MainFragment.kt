@@ -78,7 +78,7 @@ class MainFragment : Fragment() {
     private inner class MessageHandler(looper: Looper?) : Handler(looper!!) {
         override fun handleMessage(msg: Message) {
             when (msg.what) {
-                Constants.MESSAGE_READ -> onRecordsReceived(msg.obj as ByteArray, msg.arg1)
+                Constants.MESSAGE_READ -> onRecordsReceived(msg.obj as ByteArray)
             }
         }
     }
@@ -190,8 +190,8 @@ class MainFragment : Fragment() {
         }
     }
 
-    private fun onRecordsReceived(bytes: ByteArray, size: Int) {
-        mLineChart!!.update(bytes, size)
+    private fun onRecordsReceived(bytes: ByteArray) {
+        mLineChart!!.update(bytes)
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
