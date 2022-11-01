@@ -15,7 +15,6 @@ import java.io.DataInputStream
 import java.io.IOException
 import java.net.InetAddress
 import java.net.Socket
-import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.roundToLong
 
@@ -35,8 +34,9 @@ class TcpClientService : Service() {
         fun getService(): TcpClientService = this@TcpClientService
     }
 
-    private inner class TcpRunnable(handler: Handler) : Runnable {
-        val mHandler: Handler = handler
+    private inner class TcpRunnable(handler: Handler, lineChart: SensorLineChart) : Runnable {
+        val mHandler: Handler = handler  // TODO not needed
+        val mLineChart: SensorLineChart = lineChart
 
         override fun run() {
             Looper.prepare()
@@ -60,13 +60,12 @@ class TcpClientService : Service() {
                             throw IOException("Not enough buffer")
                         }
                         val bufferChunk = buffer.copyOfRange(0, readBytes)
-                        mHandler.obtainMessage(Constants.MESSAGE_READ, bufferChunk).sendToTarget()
+                        mLineChart.update(bufferChunk)
 
                         readTotal += readBytes;
                         val msSinceStart = System.currentTimeMillis() - start;
                         val bitrateAsDouble : Double = readTotal * 1000.0 / msSinceStart
                         bitrate.set(bitrateAsDouble.roundToLong())
-                        //Log.i(TAG, "Bitrate: ${bitrate.get()}")
                     } catch (e: IOException) {
                         e.printStackTrace()
                         try {
@@ -99,9 +98,9 @@ class TcpClientService : Service() {
         return binder
     }
 
-    fun startDaemonThread(handler: Handler) {
+    fun startDaemonThread(handler: Handler, lineChart: SensorLineChart) {
         startMeForeground()
-        thread = Thread(TcpRunnable(handler))
+        thread = Thread(TcpRunnable(handler, lineChart))
         thread.isDaemon = true
         thread.start()
     }

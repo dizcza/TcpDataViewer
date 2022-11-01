@@ -93,7 +93,7 @@ class SensorLineChart : LineChart, OnChartGestureListener {
             val dataset = LineDataSet(mChartEntries.toList(), CHART_LABEL)
             val data = LineData(dataset)
             setData(data)
-            invalidate()
+            postInvalidate()
             mLastUpdate = tick
             mState = State.ACTIVE
         }

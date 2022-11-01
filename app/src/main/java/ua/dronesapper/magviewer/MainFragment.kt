@@ -120,7 +120,7 @@ class MainFragment : Fragment() {
         override fun onServiceConnected(name: ComponentName, service: IBinder) {
             val binder = service as TcpBinder
             mService = binder.getService()
-            mService!!.startDaemonThread(mHandler)
+            mService!!.startDaemonThread(mHandler, mLineChart!!)
             mBound = true
             mTimer.scheduleAtFixedRate(object : TimerTask() {
                 override fun run() {
@@ -144,6 +144,9 @@ class MainFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
+    }
+
+    fun startService() {
         mHandler = MessageHandler(Looper.getMainLooper())
         val intent = Intent(context, TcpClientService::class.java)
         requireContext().bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE)
@@ -188,6 +191,8 @@ class MainFragment : Fragment() {
                 requestWriteExternal.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
             }
         }
+
+        startService()
     }
 
     private fun onRecordsReceived(bytes: ByteArray) {
