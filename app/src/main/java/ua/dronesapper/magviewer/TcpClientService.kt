@@ -7,10 +7,7 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.os.Binder
-import android.os.Build
-import android.os.IBinder
-import android.os.Looper
+import android.os.*
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
@@ -25,6 +22,9 @@ class TcpClientService : Service() {
     private lateinit var thread: Thread
     private val bitrate = AtomicLong(0)
 
+    // Binder given to clients
+    private val binder = TcpBinder()
+
     /**
      * Class used for the client Binder.  Because we know this service always
      * runs in the same process as its clients, we don't need to deal with IPC.
@@ -34,69 +34,72 @@ class TcpClientService : Service() {
         fun getService(): TcpClientService = this@TcpClientService
     }
 
-    // Binder given to clients
-    private val binder = TcpBinder()
+    private inner class TcpRunnable(handler: Handler) : Runnable {
+        val mHandler: Handler = handler
 
-    private val runnable = Runnable {
-        Looper.prepare()
+        override fun run() {
+            Looper.prepare()
 
-        try {
-            val ip = InetAddress.getByName(IP)
-            val socket = Socket(ip, PORT)
-            val dataInputStream = DataInputStream(socket.getInputStream())
+            try {
+                val ip = InetAddress.getByName(IP)
+                val socket = Socket(ip, PORT)
+                val dataInputStream = DataInputStream(socket.getInputStream())
 
-            Toast.makeText(applicationContext, "Socket opened", Toast.LENGTH_SHORT).show()
+                Toast.makeText(applicationContext, "Socket opened", Toast.LENGTH_SHORT).show()
 
-            val buffer = ByteArray(5000)
+                val buffer = ByteArray(5000)
 
-            val start = System.currentTimeMillis()
-            var readTotal = 0;
+                val start = System.currentTimeMillis()
+                var readTotal = 0;
 
-            while (!Thread.currentThread().isInterrupted) {
-                try {
-                    val r = dataInputStream.read(buffer);
-                    if (r == -1) {
-                        throw IOException("Not enough buffer")
-                    }
-                    readTotal += r;
-                    val msSinceStart = System.currentTimeMillis() - start;
-                    val bitrateAsDouble : Double = readTotal * 1000.0 / msSinceStart
-                    bitrate.set(bitrateAsDouble.roundToLong())
-                    //Log.i(TAG, "Bitrate: ${bitrate.get()}")
-                } catch (e: IOException) {
-                    e.printStackTrace()
+                while (!Thread.currentThread().isInterrupted) {
                     try {
-                        dataInputStream.close()
-                    } catch (ex: IOException) {
-                        ex.printStackTrace()
+                        val readBytes = dataInputStream.read(buffer);
+                        if (readBytes == -1) {
+                            throw IOException("Not enough buffer")
+                        }
+                        mHandler.obtainMessage(Constants.MESSAGE_READ, readBytes, -1, buffer).sendToTarget()
+
+                        readTotal += readBytes;
+                        val msSinceStart = System.currentTimeMillis() - start;
+                        val bitrateAsDouble : Double = readTotal * 1000.0 / msSinceStart
+                        bitrate.set(bitrateAsDouble.roundToLong())
+                        //Log.i(TAG, "Bitrate: ${bitrate.get()}")
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                        try {
+                            dataInputStream.close()
+                        } catch (ex: IOException) {
+                            ex.printStackTrace()
+                        }
+                        break
+                    } catch (e: InterruptedException) {
+                        e.printStackTrace()
+                        try {
+                            dataInputStream.close()
+                        } catch (ex: IOException) {
+                            ex.printStackTrace()
+                        }
+                        break
                     }
-                    break
-                } catch (e: InterruptedException) {
-                    e.printStackTrace()
-                    try {
-                        dataInputStream.close()
-                    } catch (ex: IOException) {
-                        ex.printStackTrace()
-                    }
-                    break
                 }
+
+                socket.close()
+
+            } catch (e: IOException) {
+                e.printStackTrace()
             }
-
-            socket.close()
-
-        } catch (e: IOException) {
-            e.printStackTrace()
+            Toast.makeText(applicationContext, "Socket closed", Toast.LENGTH_SHORT).show()
         }
-        Toast.makeText(applicationContext, "Socket closed", Toast.LENGTH_SHORT).show()
     }
 
     override fun onBind(intent: Intent): IBinder {
         return binder
     }
 
-    override fun onCreate() {
+    fun startDaemonThread(handler: Handler) {
         startMeForeground()
-        thread = Thread(runnable)
+        thread = Thread(TcpRunnable(handler))
         thread.isDaemon = true
         thread.start()
     }

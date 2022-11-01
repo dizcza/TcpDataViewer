@@ -20,6 +20,6 @@ package ua.dronesapper.magviewer;
  * Defines several constants used between the service and UI.
  */
 public interface Constants {
-
+    int MESSAGE_READ = 2;
     String RECORDS_FOLDER = "SensorRecords";
 }
