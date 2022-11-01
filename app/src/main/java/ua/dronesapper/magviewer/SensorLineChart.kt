@@ -1,6 +1,7 @@
 package ua.dronesapper.magviewer
 
 import android.content.Context
+import android.graphics.Canvas
 import android.util.AttributeSet
 import android.view.MotionEvent
 import com.github.mikephil.charting.charts.LineChart
@@ -57,6 +58,11 @@ class SensorLineChart : LineChart, OnChartGestureListener {
         setNoDataText("Waiting for sensor data...")
         description = null
         onChartGestureListener = this
+    }
+
+    @Synchronized
+    override fun onDraw(canvas: Canvas?) {
+        super.onDraw(canvas)
     }
 
     @Synchronized
@@ -128,7 +134,7 @@ class SensorLineChart : LineChart, OnChartGestureListener {
     override fun onChartTranslate(me: MotionEvent, dX: Float, dY: Float) {}
 
     companion object {
-        private const val UPDATE_PERIOD_MS: Long = 100
+        private const val UPDATE_PERIOD_MS: Long = 10
         private const val CHART_LABEL = "Magnetic field diff, uT"
     }
 }
