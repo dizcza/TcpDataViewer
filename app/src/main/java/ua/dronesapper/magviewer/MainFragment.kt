@@ -36,52 +36,20 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import ua.dronesapper.magviewer.TcpClientService.TcpBinder
-import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
-import java.io.PrintWriter
-import java.text.SimpleDateFormat
 import java.util.*
 
 
-/**
- * This fragment controls Bluetooth to communicate with other devices.
- */
-class MainFragment : Fragment() {
-
-    // Layout Views
-    private var mLineChart: SensorLineChart? = null
-    private val mSavedChartsFragment = SavedChartsFragment()
-    private var mTagSave: EditText? = null
-    private var mBound = false
-
-    private val mServiceConnection = ServiceConnectionTcp()
-
-    private inner class BackStackChanged : FragmentManager.OnBackStackChangedListener {
-        private var mChartWasActive = false
-        override fun onBackStackChanged() {
-            if (mLineChart == null) {
-                return
-            }
-            if (parentFragmentManager.backStackEntryCount == 0) {
-                // Main fragment is back active
-                if (mChartWasActive) {
-                    // if the chart was active, clear and resume
-                    // otherwise, keep paused until the user press the button
-                    mLineChart!!.clear()
-                }
-            } else {
-                // Main fragment is replaced by the SavedChartsFragment
-                mChartWasActive = mLineChart!!.isActive
-                mLineChart!!.pause()
-            }
-        }
+abstract class FragmentWritePermissionManager : Fragment() {
+    companion object {
+        @JvmStatic
+        protected val TAG = FragmentWritePermissionManager::class.java.simpleName
     }
 
     // request write permission Android <11
-    private val mRequestWriteExternalOldAPI: ActivityResultLauncher<String> = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+    private val mRequestWriteExternalOldAPI: ActivityResultLauncher<String> = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
         if (isGranted) {
-            saveChart()
+            onWritePermissionGranted()
         } else {
             Toast.makeText(context, "Write permission not granted", Toast.LENGTH_SHORT).show()
         }
@@ -97,7 +65,7 @@ class MainFragment : Fragment() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 if (Environment.isExternalStorageManager()) {
                     //Manage External Storage Permission is granted
-                    saveChart()
+                    onWritePermissionGranted()
                 } else {
                     //Manage External Storage Permission is denied
                     Log.d(TAG, "onActivityResult: Manage External Storage Permission is denied")
@@ -109,6 +77,93 @@ class MainFragment : Fragment() {
                 }
             }
         }
+
+    protected fun requestWritePermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            //Android is 11(R) or above
+            try {
+                val intent = Intent()
+                intent.action = Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION
+                val uri: Uri = Uri.fromParts("package", requireContext().packageName, null)
+                intent.data = uri
+                mStorageActivityResultLauncher.launch(intent)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                val intent = Intent()
+                intent.action = Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION
+                mStorageActivityResultLauncher.launch(intent)
+            }
+        } else {
+            //Android is below 11(R)
+            // The registered ActivityResultCallback gets the result of this request.
+            mRequestWriteExternalOldAPI.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        }
+    }
+
+    protected fun permissionWriteGranted(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            //Android is 11(R) or above
+            Environment.isExternalStorageManager()
+        } else {
+            //Android is below 11(R)
+            ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED
+        }
+    }
+
+    protected abstract fun onWritePermissionGranted()
+}
+
+/**
+ * This fragment controls Bluetooth to communicate with other devices.
+ */
+class MainFragment : FragmentWritePermissionManager() {
+
+    private val mSavedChartsFragment = SavedChartsFragment()
+    private val mServiceConnection = ServiceConnectionTcp()
+    private lateinit var mLineChart: SensorLineChart
+    private lateinit var mTagSave: EditText
+    private var mBound = false
+
+    private inner class BackStackChanged : FragmentManager.OnBackStackChangedListener {
+        private var mChartWasActive = false
+        override fun onBackStackChanged() {
+            if (parentFragmentManager.backStackEntryCount == 0) {
+                // Main fragment is back active
+                if (mChartWasActive) {
+                    // if the chart was active, clear and resume
+                    // otherwise, keep paused until the user press the button
+                    mLineChart.clear()
+                }
+            } else {
+                // Main fragment is replaced by the SavedChartsFragment
+                mChartWasActive = mLineChart.isActive
+                mLineChart.pause()
+            }
+        }
+    }
+
+    private inner class ServiceConnectionTcp : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName, service: IBinder) {
+            val binder = service as TcpBinder
+            val myService = binder.getService()
+            myService.startDaemonThread(mLineChart)
+            mBound = true
+        }
+
+        override fun onServiceDisconnected(name: ComponentName) {
+            Log.d(TAG, "onServiceDisconnected")
+            mBound = false
+        }
+
+        override fun onBindingDied(name: ComponentName) {
+            Log.d(TAG, "onBindingDied")
+            requireContext().unbindService(this)
+            mBound = false
+        }
+    }
 
     @SuppressLint("ApplySharedPref")
     private fun createConnectDialog(): AlertDialog {
@@ -152,93 +207,31 @@ class MainFragment : Fragment() {
     }
 
     private fun saveChart() {
-        var tag = mTagSave!!.text.toString()
-        mTagSave!!.setText("")
-        if (tag != "") {
-            tag = " $tag"
-        }
-        val entries = mLineChart!!.chartEntries
-        if (entries.isEmpty()) {
-            // no entries in the chart
-            Toast.makeText(context, "No data", Toast.LENGTH_SHORT).show()
-            return
-        }
-        val recordsDir = Utils.getRecordsFolder(requireContext())
-        if (!recordsDir.exists()) {
-            if (!recordsDir.mkdirs()) {
-                Toast.makeText(context, "mkdir failed", Toast.LENGTH_SHORT).show()
-            }
-        }
-        val locale = Locale.getDefault()
-        val pattern = String.format(locale, "yyyy.MM.dd HH.mm.ss'%s.txt'", tag)
-        val fileName = SimpleDateFormat(pattern, locale).format(Date())
-        val file = File(recordsDir, fileName)
-        try {
-            val fos = FileOutputStream(file)
-            val pw = PrintWriter(fos)
-            for (entry in entries) {
-                pw.println(String.format(locale, "%.6f,%.4f", entry.x, entry.y))
-            }
-            pw.close()
-            Toast.makeText(context, "Saved", Toast.LENGTH_SHORT).show()
-        } catch (e: IOException) {
-            e.printStackTrace()
-            Toast.makeText(context, e.message, Toast.LENGTH_SHORT).show()
-        }
+        val tagName = mTagSave.text.toString()
+        mLineChart.saveCharts(tagName)
+        mTagSave.setText("")
     }
 
-    private inner class ServiceConnectionTcp : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName, service: IBinder) {
-            val binder = service as TcpBinder
-            val myService = binder.getService()
-            myService.startDaemonThread(mLineChart!!)
-            mBound = true
-        }
-
-        override fun onServiceDisconnected(name: ComponentName) {
-            Log.d(TAG, "onServiceDisconnected")
-            mBound = false
-        }
-
-        override fun onBindingDied(name: ComponentName) {
-            Log.d(TAG, "onBindingDied")
-            requireContext().unbindService(this)
-            mBound = false
-        }
-    }
-
-    private fun requestWritePermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            //Android is 11(R) or above
-            try {
-                val intent = Intent()
-                intent.action = Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION
-                val uri: Uri = Uri.fromParts("package", requireContext().packageName, null)
-                intent.data = uri
-                mStorageActivityResultLauncher.launch(intent)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                val intent = Intent()
-                intent.action = Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION
-                mStorageActivityResultLauncher.launch(intent)
-            }
-        } else {
-            //Android is below 11(R)
-            // The registered ActivityResultCallback gets the result of this request.
-            mRequestWriteExternalOldAPI.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-        }
+    override fun onWritePermissionGranted() {
+        saveChart()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
-        parentFragmentManager.addOnBackStackChangedListener(BackStackChanged())
     }
 
     private fun startService() {
-        mLineChart!!.clear()
+        mLineChart.clear()
         val intent = Intent(context, TcpClientService::class.java)
         requireContext().bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if (!mBound) {
+            startService()
+        }
     }
 
     override fun onStop() {
@@ -256,24 +249,12 @@ class MainFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_main, container, false)
     }
 
-    private fun permissionWriteGranted(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            //Android is 11(R) or above
-            Environment.isExternalStorageManager()
-        } else {
-            //Android is below 11(R)
-            ContextCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-            ) == PackageManager.PERMISSION_GRANTED
-        }
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         mLineChart = view.findViewById(R.id.graph)
         mTagSave = view.findViewById(R.id.tag_save)
-        val saveGraphBtn = view.findViewById<Button>(R.id.save_btn)
+        parentFragmentManager.addOnBackStackChangedListener(BackStackChanged())
 
+        val saveGraphBtn = view.findViewById<Button>(R.id.save_btn)
         saveGraphBtn.setOnClickListener {
             if (permissionWriteGranted()) {
                 saveChart()
@@ -281,8 +262,6 @@ class MainFragment : Fragment() {
                 requestWritePermission()
             }
         }
-
-        startService()
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -305,7 +284,4 @@ class MainFragment : Fragment() {
         return false
     }
 
-    companion object {
-        private val TAG = MainFragment::class.java.simpleName
-    }
 }

@@ -4,12 +4,20 @@ import android.content.Context
 import android.graphics.Canvas
 import android.util.AttributeSet
 import android.view.MotionEvent
+import android.widget.Toast
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.listener.ChartTouchListener.ChartGesture
 import com.github.mikephil.charting.listener.OnChartGestureListener
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.PrintWriter
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.collections.ArrayDeque
 
 class SensorLineChart : LineChart, OnChartGestureListener {
     private val mChartEntries = ArrayDeque<Entry>(Constants.DEQUEUE_SIZE)
@@ -47,6 +55,7 @@ class SensorLineChart : LineChart, OnChartGestureListener {
     @Synchronized
     override fun clear() {
         super.clear()
+        postInvalidate()
         mChartEntries.clear()
         mState = State.CLEARED
     }
@@ -134,6 +143,46 @@ class SensorLineChart : LineChart, OnChartGestureListener {
 
     override fun onChartScale(me: MotionEvent, scaleX: Float, scaleY: Float) {}
     override fun onChartTranslate(me: MotionEvent, dX: Float, dY: Float) {}
+
+    /**
+     * Save current chart.
+     * Not thread safe.
+     */
+    fun saveCharts(name: String) {
+        var tagName = name
+        if (tagName != "") {
+            tagName = " $tagName"
+        }
+
+        val entries = chartEntries  // synchronized
+        if (entries.isEmpty()) {
+            // no entries in the chart
+            Toast.makeText(context, "No data", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val recordsDir = Utils.getRecordsFolder(context)
+        if (!recordsDir.exists()) {
+            if (!recordsDir.mkdirs()) {
+                Toast.makeText(context, "mkdir failed", Toast.LENGTH_SHORT).show()
+            }
+        }
+        val locale = Locale.getDefault()
+        val pattern = String.format(locale, "yyyy.MM.dd HH.mm.ss'%s.txt'", tagName)
+        val fileName = SimpleDateFormat(pattern, locale).format(Date())
+        val file = File(recordsDir, fileName)
+        try {
+            val fos = FileOutputStream(file)
+            val pw = PrintWriter(fos)
+            for (entry in entries) {
+                pw.println(String.format(locale, "%.6f,%.4f", entry.x, entry.y))
+            }
+            pw.close()
+            Toast.makeText(context, "Saved", Toast.LENGTH_SHORT).show()
+        } catch (e: IOException) {
+            e.printStackTrace()
+            Toast.makeText(context, e.message, Toast.LENGTH_SHORT).show()
+        }
+    }
 
     companion object {
         private const val UPDATE_PERIOD_MS: Long = 10

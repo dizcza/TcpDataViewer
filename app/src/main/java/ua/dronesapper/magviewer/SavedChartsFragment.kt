@@ -55,7 +55,6 @@ internal class ChartDataAdapter(context: Context?, objects: List<LineData>?) :
     }
 }
 
-internal class LineData(dataSet: ILineDataSet?, val label: String) : LineData(dataSet)
 class SavedChartsFragment : Fragment() {
     private lateinit var mAdapter: ChartDataAdapter
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -83,7 +82,7 @@ class SavedChartsFragment : Fragment() {
     ): View? {
         return inflater.inflate(R.layout.saved_chart_list, container, false)
     }
-    
+
     private fun readRecord(charts: MutableList<LineData>, file: File) {
         val chartEntries: MutableList<Entry> = ArrayList()
         try {
