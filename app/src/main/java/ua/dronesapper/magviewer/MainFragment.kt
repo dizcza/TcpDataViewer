@@ -19,13 +19,17 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.*
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.*
+import android.provider.Settings
 import android.util.Log
 import android.view.*
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
@@ -39,10 +43,12 @@ import java.io.PrintWriter
 import java.text.SimpleDateFormat
 import java.util.*
 
+
 /**
  * This fragment controls Bluetooth to communicate with other devices.
  */
 class MainFragment : Fragment() {
+
     // Layout Views
     private var mLineChart: SensorLineChart? = null
     private val mSavedChartsFragment = SavedChartsFragment()
@@ -72,6 +78,37 @@ class MainFragment : Fragment() {
         }
     }
 
+    // request write permission Android <11
+    private val mRequestWriteExternalOldAPI: ActivityResultLauncher<String> = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+        if (isGranted) {
+            saveChart()
+        } else {
+            Toast.makeText(context, "Write permission not granted", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // request write permission Android >=11
+    private val mStorageActivityResultLauncher: ActivityResultLauncher<Intent> =
+        registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { activityResult: ActivityResult ->
+            // Launched only for Android >=11
+            Log.d(TAG, "onActivityResult: $activityResult")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                if (Environment.isExternalStorageManager()) {
+                    //Manage External Storage Permission is granted
+                    saveChart()
+                } else {
+                    //Manage External Storage Permission is denied
+                    Log.d(TAG, "onActivityResult: Manage External Storage Permission is denied")
+                    Toast.makeText(
+                        context,
+                        "Manage External Storage Permission is denied",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
 
     @SuppressLint("ApplySharedPref")
     private fun createConnectDialog(): AlertDialog {
@@ -121,22 +158,24 @@ class MainFragment : Fragment() {
             tag = " $tag"
         }
         val entries = mLineChart!!.chartEntries
-        if (entries == null || entries.isEmpty()) {
+        if (entries.isEmpty()) {
             // no entries in the chart
             Toast.makeText(context, "No data", Toast.LENGTH_SHORT).show()
             return
         }
-        val root = Environment.getExternalStorageDirectory()
-        val records = File(root.absolutePath, Constants.RECORDS_FOLDER)
-        records.mkdirs()
+        val recordsDir = Utils.getRecordsFolder(requireContext())
+        if (!recordsDir.exists()) {
+            if (!recordsDir.mkdirs()) {
+                Toast.makeText(context, "mkdir failed", Toast.LENGTH_SHORT).show()
+            }
+        }
         val locale = Locale.getDefault()
-        val pattern = String.format(locale, "yyyy.MM.dd HH:mm:ss'%s.txt'", tag)
+        val pattern = String.format(locale, "yyyy.MM.dd HH.mm.ss'%s.txt'", tag)
         val fileName = SimpleDateFormat(pattern, locale).format(Date())
-        val file = File(records, fileName)
+        val file = File(recordsDir, fileName)
         try {
             val fos = FileOutputStream(file)
             val pw = PrintWriter(fos)
-            pw.println(mLineChart!!.description.text)
             for (entry in entries) {
                 pw.println(String.format(locale, "%.6f,%.4f", entry.x, entry.y))
             }
@@ -144,6 +183,7 @@ class MainFragment : Fragment() {
             Toast.makeText(context, "Saved", Toast.LENGTH_SHORT).show()
         } catch (e: IOException) {
             e.printStackTrace()
+            Toast.makeText(context, e.message, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -167,6 +207,28 @@ class MainFragment : Fragment() {
         }
     }
 
+    private fun requestWritePermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            //Android is 11(R) or above
+            try {
+                val intent = Intent()
+                intent.action = Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION
+                val uri: Uri = Uri.fromParts("package", requireContext().packageName, null)
+                intent.data = uri
+                mStorageActivityResultLauncher.launch(intent)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                val intent = Intent()
+                intent.action = Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION
+                mStorageActivityResultLauncher.launch(intent)
+            }
+        } else {
+            //Android is below 11(R)
+            // The registered ActivityResultCallback gets the result of this request.
+            mRequestWriteExternalOldAPI.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
@@ -181,8 +243,10 @@ class MainFragment : Fragment() {
 
     override fun onStop() {
         super.onStop()
-        requireContext().unbindService(mServiceConnection)
-        mBound = false
+        if (mBound) {
+            requireContext().unbindService(mServiceConnection)
+            mBound = false
+        }
     }
 
     override fun onCreateView(
@@ -192,28 +256,29 @@ class MainFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_main, container, false)
     }
 
+    private fun permissionWriteGranted(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            //Android is 11(R) or above
+            Environment.isExternalStorageManager()
+        } else {
+            //Android is below 11(R)
+            ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED
+        }
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         mLineChart = view.findViewById(R.id.graph)
         mTagSave = view.findViewById(R.id.tag_save)
         val saveGraphBtn = view.findViewById<Button>(R.id.save_btn)
-        val requestWriteExternal =
-            registerForActivityResult<String, Boolean>(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-                if (isGranted) {
-                    saveChart()
-                } else {
-                    Toast.makeText(context, "Could not save the chart", Toast.LENGTH_SHORT).show()
-                }
-            }
+
         saveGraphBtn.setOnClickListener {
-            if (ContextCompat.checkSelfPermission(
-                    requireContext(),
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
+            if (permissionWriteGranted()) {
                 saveChart()
             } else {
-                // The registered ActivityResultCallback gets the result of this request.
-                requestWriteExternal.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                requestWritePermission()
             }
         }
 

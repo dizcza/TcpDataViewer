@@ -15,7 +15,8 @@ class SensorLineChart : LineChart, OnChartGestureListener {
     private val mChartEntries = ArrayDeque<Entry>(Constants.DEQUEUE_SIZE)
 
     @get:Synchronized
-    val chartEntries: List<Entry>? = null
+    val chartEntries: List<Entry>
+        get() = mChartEntries.toList()
 
     private var mState = State.CLEARED
     private var mLastUpdate: Long = 0
@@ -67,6 +68,9 @@ class SensorLineChart : LineChart, OnChartGestureListener {
 
     @Synchronized
     fun update(bytes: ByteArray) {
+        if (mState == State.INACTIVE) {
+            return
+        }
         var available = Constants.DEQUEUE_SIZE - mChartEntries.size
         val remove = bytes.size - available
         if (remove > 0) {
@@ -82,17 +86,15 @@ class SensorLineChart : LineChart, OnChartGestureListener {
         available = Constants.DEQUEUE_SIZE - mChartEntries.size
         val start = if (bytes.size < available) 0 else bytes.size - available
         for (i in start until bytes.size) {
-            if (mState != State.INACTIVE) {
-                val entry = Entry(
-                    mRecordId++.toFloat(),
-                    bytes[i].toFloat()
-                )
-                mChartEntries.addLast(entry)
-            }
+            val entry = Entry(
+                mRecordId++.toFloat(),
+                bytes[i].toFloat()
+            )
+            mChartEntries.addLast(entry)
         }
 
         val tick = System.currentTimeMillis()
-        if (mState != State.INACTIVE && tick > mLastUpdate + UPDATE_PERIOD_MS) {
+        if (tick > mLastUpdate + UPDATE_PERIOD_MS) {
             // either CLEARED or ACTIVE state
             val dataset = LineDataSet(mChartEntries.toList(), CHART_LABEL)
             val data = LineData(dataset)
