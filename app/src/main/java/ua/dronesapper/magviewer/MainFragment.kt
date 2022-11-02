@@ -272,7 +272,7 @@ class MainFragment : FragmentWritePermissionManager() {
         when (item.itemId) {
             R.id.show_saved -> {
                 parentFragmentManager.beginTransaction()
-                    .replace(R.id.main_fragment, mSavedChartsFragment).addToBackStack(null)
+                    .replace(R.id.fragment_main, mSavedChartsFragment).addToBackStack(null)
                     .commit()
                 return true
             }

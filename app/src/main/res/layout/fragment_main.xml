@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/main_fragment"
+    android:id="@+id/fragment_main"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -16,8 +16,10 @@
         android:id="@+id/graph" />
 
     <LinearLayout
+        android:layout_weight="0.1"
         android:layout_width="match_parent"
-        android:layout_height="40dp"
+        android:layout_height="0dp"
+        android:minHeight="40dp"
         android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
         tools:layout_editor_absoluteX="10dp">
@@ -30,7 +32,7 @@
             android:layout_weight="1"
             android:hint="@string/tag_save_hint"
             android:inputType="text"
-            tools:ignore="Autofill" />
+            tools:ignore="Autofill,NestedWeights" />
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/save_btn"
