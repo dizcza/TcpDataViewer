@@ -7,38 +7,37 @@
     android:layout_height="wrap_content" >
 
     <TextView
-        android:text="@string/connect_desc"
+        android:text="@string/plot_settings"
         android:textSize="20sp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"/>
 
     <TextView
-        android:text="@string/tcp_server_ip_address_desc"
+        android:text="@string/chart_size_desc"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
     <EditText
-        android:id="@+id/server_ipaddr"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ems="10"
-        android:inputType="textUri"
-        android:text="@string/ipaddr_default"
-        android:importantForAutofill="no"
-        tools:ignore="LabelFor" />
-
-    <TextView
-        android:layout_marginTop="@dimen/vertical_space"
-        android:text="@string/port_desc"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-    <EditText
-        android:id="@+id/server_port"
+        android:id="@+id/plot_size"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10"
         android:inputType="number"
-        android:text="@integer/port_default"
+        android:text="@integer/plot_size_default"
+        android:importantForAutofill="no"
+        tools:ignore="LabelFor" />
+
+    <TextView
+        android:text="@string/update_period_desc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+    <EditText
+        android:id="@+id/plot_update_period"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="number"
+        android:text="@integer/update_period_default"
         android:importantForAutofill="no"
         tools:ignore="LabelFor" />
 

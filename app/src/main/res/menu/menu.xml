@@ -28,7 +28,12 @@
 
     <item
         android:id="@+id/data_protocol_dialog"
-        android:title="@string/data_protocol_dialog"
+        android:title="@string/data_protocol"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/plot_settings"
+        android:title="@string/plot_settings"
         app:showAsAction="never" />
 
 </menu>

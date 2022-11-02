@@ -1,5 +1,6 @@
 .gradle/
 .idea/
+release/
 
 # Compiled class file
 *.class

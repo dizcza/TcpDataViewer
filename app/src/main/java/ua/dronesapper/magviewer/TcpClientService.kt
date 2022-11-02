@@ -30,14 +30,11 @@ class TcpClientService : Service() {
     private fun openSocket(): Socket {
         val sharedPref = Utils.getSharedPref(applicationContext)
         val ipaddrStr: String = sharedPref.getString(
-            Constants.SERVER_IPADDR_SHARED_KEY,
-            applicationContext.getString(R.string.ipaddr)
+            SharedKey.SERVER_IPADDR,
+            applicationContext.getString(R.string.ipaddr_default)
         )!!
 
-        val port: Int = sharedPref.getInt(
-            Constants.SERVER_PORT_SHARED_KEY,
-            applicationContext.resources.getInteger(R.integer.port)
-        )
+        val port: Int = Utils.getInteger(applicationContext, SharedKey.SERVER_PORT)
 
         val ip: InetAddress = InetAddress.getByName(ipaddrStr)
         return Socket(ip, port)
@@ -53,7 +50,7 @@ class TcpClientService : Service() {
                 val socket = openSocket()
                 val dataInputStream = DataInputStream(socket.getInputStream())
 
-                Toast.makeText(applicationContext, "Socket opened", Toast.LENGTH_SHORT).show()
+                Toast.makeText(applicationContext, "Connected", Toast.LENGTH_SHORT).show()
 
                 val buffer = ByteArray(Constants.BUFFER_SIZE)
 
@@ -85,11 +82,12 @@ class TcpClientService : Service() {
                 }
 
                 socket.close()
-                Toast.makeText(applicationContext, "Socket closed", Toast.LENGTH_SHORT).show()
+                Toast.makeText(applicationContext, "Connection closed", Toast.LENGTH_SHORT).show()
 
             } catch (e: IOException) {
                 e.printStackTrace()
                 Toast.makeText(applicationContext, e.message, Toast.LENGTH_SHORT).show()
+                Toast.makeText(applicationContext, "Go to 'Connect to TCP server'", Toast.LENGTH_SHORT).show()
             }
         }
     }

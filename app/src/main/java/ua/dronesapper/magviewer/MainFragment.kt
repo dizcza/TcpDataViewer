@@ -170,18 +170,50 @@ class MainFragment : FragmentWritePermissionManager() {
         val builder: AlertDialog.Builder = AlertDialog.Builder(requireContext())
         val dialogView: View = layoutInflater.inflate(R.layout.dialog_data_type, null)
 
-        Utils.radioGroupLoadChecked(dialogView, R.id.data_type, Constants.DATA_TYPE_SHARED_KEY)
-        Utils.radioGroupLoadChecked(dialogView, R.id.data_endian, Constants.ENDIAN_SHARED_KEY)
+        Utils.radioGroupLoadChecked(dialogView, SharedKey.DATA_TYPE)
+        Utils.radioGroupLoadChecked(dialogView, SharedKey.ENDIAN)
 
         builder.setView(dialogView)
             .setPositiveButton(
                 R.string.dialog_data_protocol_save
             ) { _, _ ->
                 val editor = sharedPref.edit()
-                Utils.radioGroupSaveChecked(dialogView, R.id.data_type, Constants.DATA_TYPE_SHARED_KEY, editor)
-                Utils.radioGroupSaveChecked(dialogView, R.id.data_endian, Constants.ENDIAN_SHARED_KEY, editor)
+                Utils.radioGroupSaveChecked(dialogView, SharedKey.DATA_TYPE, editor)
+                Utils.radioGroupSaveChecked(dialogView, SharedKey.ENDIAN, editor)
                 editor.commit()
                 mLineChart.onDataProtocolUpdated()
+            }
+            .setNegativeButton(
+                R.string.dialog_cancel
+            ) { dialog, _ -> dialog.cancel()
+                mLineChart.clear()
+            }
+        return builder.create()
+    }
+
+    @SuppressLint("ApplySharedPref")
+    private fun createPlotSettingsDialog(): AlertDialog {
+        mLineChart.pause()
+        val sharedPref: SharedPreferences = Utils.getSharedPref(requireContext())
+
+        val builder: AlertDialog.Builder = AlertDialog.Builder(requireContext())
+        val dialogView: View = layoutInflater.inflate(R.layout.dialog_plot_settings, null)
+
+        val textPlotSize: TextView = dialogView.findViewById(R.id.plot_size)
+        textPlotSize.text = Utils.getInteger(requireContext(), SharedKey.PLOT_KEEP_LAST_COUNT).toString()
+
+        val textPlotUpdatePeriod: TextView = dialogView.findViewById(R.id.plot_update_period)
+        textPlotUpdatePeriod.text = Utils.getInteger(requireContext(), SharedKey.PLOT_UPDATE_PERIOD).toString()
+
+        builder.setView(dialogView)
+            .setPositiveButton(
+                R.string.dialog_data_protocol_save
+            ) { _, _ ->
+                val editor = sharedPref.edit()
+                editor.putInt(SharedKey.PLOT_KEEP_LAST_COUNT, textPlotSize.text.toString().toInt())
+                editor.putInt(SharedKey.PLOT_UPDATE_PERIOD, textPlotUpdatePeriod.text.toString().toInt())
+                editor.commit()
+                mLineChart.onSettingsUpdated()
             }
             .setNegativeButton(
                 R.string.dialog_cancel
@@ -205,24 +237,20 @@ class MainFragment : FragmentWritePermissionManager() {
         val textIPAddrView: TextView = dialogView.findViewById(R.id.server_ipaddr)
         textIPAddrView.text =
             sharedPref.getString(
-                Constants.SERVER_IPADDR_SHARED_KEY,
-                requireContext().getString(R.string.ipaddr)
+                SharedKey.SERVER_IPADDR,
+                requireContext().getString(R.string.ipaddr_default)
             )
 
         val textPortView: TextView = dialogView.findViewById(R.id.server_port)
-        textPortView.text =
-            sharedPref.getInt(
-                Constants.SERVER_PORT_SHARED_KEY,
-                requireContext().resources.getInteger(R.integer.port)
-            ).toString()
+        textPortView.text = Utils.getInteger(requireContext(), SharedKey.SERVER_PORT).toString()
 
         builder.setView(dialogView)
             .setPositiveButton(R.string.dialog_connect, DialogInterface.OnClickListener { dialog, id ->
                 val editor = sharedPref.edit()
                 val serverIP = textIPAddrView.text.toString()
-                editor.putString(Constants.SERVER_IPADDR_SHARED_KEY, serverIP)
+                editor.putString(SharedKey.SERVER_IPADDR, serverIP)
                 val port = textPortView.text.toString().toInt()
-                editor.putInt(Constants.SERVER_PORT_SHARED_KEY, port)
+                editor.putInt(SharedKey.SERVER_PORT, port)
                 editor.commit()
 
                 startService()
@@ -308,6 +336,10 @@ class MainFragment : FragmentWritePermissionManager() {
             }
             R.id.data_protocol_dialog -> {
                 createDataProtocolDialog().show()
+                return true
+            }
+            R.id.plot_settings -> {
+                createPlotSettingsDialog().show()
                 return true
             }
         }

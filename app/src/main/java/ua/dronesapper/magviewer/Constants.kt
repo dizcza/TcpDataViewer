@@ -15,20 +15,22 @@
  */
 package ua.dronesapper.magviewer
 
+object SharedKey {
+    const val SERVER_IPADDR = "server_ipaddr"
+    const val SERVER_PORT = "server_port"
+
+    const val DATA_TYPE = "data_type"
+    const val ENDIAN = "data_endian"
+
+    const val PLOT_KEEP_LAST_COUNT = "plot_size"
+    const val PLOT_UPDATE_PERIOD = "plot_update_period"
+}
+
 /**
  * Defines several constants used between the service and UI.
  */
-interface Constants {
-    companion object {
-        const val BUFFER_SIZE = 1024
-        const val DEQUEUE_SIZE = 100
-        const val RECORDS_FOLDER = "SensorRecords"
-        const val SHARED_KEY_FILE = "ua.dronesapper.magviewer.SHARED_KEY"
-
-        const val SERVER_IPADDR_SHARED_KEY = "server_ipaddr"
-        const val SERVER_PORT_SHARED_KEY = "server_port"
-
-        const val DATA_TYPE_SHARED_KEY = "data_type"
-        const val ENDIAN_SHARED_KEY = "data_endian"
-    }
+object Constants {
+    const val BUFFER_SIZE = 1024
+    const val RECORDS_FOLDER = "SensorRecords"
+    const val SHARED_KEY_FILE = "ua.dronesapper.magviewer.SHARED_KEY"
 }

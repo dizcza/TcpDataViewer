@@ -14,6 +14,10 @@ Specify TCP server IP address and port number
 
 Specify data type (`int8_t`, `int_16_t`, `int32_t`, `float`) and endianness (big/little).
 
+### Plot settings
+
+Specify plot chart max size and update period.
+
 ## Screenshots
 
 ![screenshot](./screenshots/screenshot.jpg)

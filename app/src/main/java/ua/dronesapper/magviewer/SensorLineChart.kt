@@ -18,12 +18,15 @@ import java.io.PrintWriter
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayDeque
+import kotlin.properties.Delegates
 
 class SensorLineChart : LineChart, OnChartGestureListener {
-    private var mChartEntries = ArrayDeque<Entry>(Constants.DEQUEUE_SIZE)
+    private var mChartEntries = ArrayDeque<Entry>()
     private val mDataProtocolParser = DataProtocolParser()
     private var mState = State.CLEARED
     private var mLastUpdate: Long = 0
+    private var mUpdatePeriod: Int = 0
+    private var mPlotSizeMax by Delegates.notNull<Int>()
 
     enum class State {
         CLEARED,  // waiting for sensory data
@@ -69,6 +72,8 @@ class SensorLineChart : LineChart, OnChartGestureListener {
         description = null
         onChartGestureListener = this
         mDataProtocolParser.loadProtocol(context)
+        mPlotSizeMax = Utils.getInteger(context, SharedKey.PLOT_KEEP_LAST_COUNT)
+        mUpdatePeriod = Utils.getInteger(context, SharedKey.PLOT_UPDATE_PERIOD)
     }
 
     @Synchronized
@@ -77,11 +82,11 @@ class SensorLineChart : LineChart, OnChartGestureListener {
     }
 
     private fun trimEntries(entries: List<Entry>) : List<Entry> {
-        val available = Constants.DEQUEUE_SIZE - mChartEntries.size
+        val available = mPlotSizeMax - mChartEntries.size
         val removed = entries.size - available
         if (removed > 0) {
             if (removed > mChartEntries.size) {
-                val slicedList = entries.slice(entries.size - Constants.DEQUEUE_SIZE until entries.size)
+                val slicedList = entries.slice(entries.size - mPlotSizeMax until entries.size)
                 mChartEntries = ArrayDeque(slicedList)
                 return slicedList
             } else {
@@ -101,7 +106,7 @@ class SensorLineChart : LineChart, OnChartGestureListener {
         }
         val entries = trimEntries(mDataProtocolParser.receive(bytes))
         val tick = System.currentTimeMillis()
-        if (tick > mLastUpdate + UPDATE_PERIOD_MS) {
+        if (tick > mLastUpdate + mUpdatePeriod) {
             // either CLEARED or ACTIVE state
             val dataset = LineDataSet(entries, CHART_LABEL)
             val data = LineData(dataset)
@@ -188,8 +193,14 @@ class SensorLineChart : LineChart, OnChartGestureListener {
         clear()
     }
 
+    @Synchronized
+    fun onSettingsUpdated() {
+        mPlotSizeMax = Utils.getInteger(context, SharedKey.PLOT_KEEP_LAST_COUNT)
+        mUpdatePeriod = Utils.getInteger(context, SharedKey.PLOT_UPDATE_PERIOD)
+        clear()
+    }
+
     companion object {
-        private const val UPDATE_PERIOD_MS: Long = 10
         private const val CHART_LABEL = "Magnetic field diff, uT"
     }
 }

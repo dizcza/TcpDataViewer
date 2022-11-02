@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <integer name="port">3333</integer>
+    <integer name="port_default">3333</integer>
+    <integer name="plot_size_default">100</integer>
+    <integer name="update_period_default">10</integer>
 </resources>

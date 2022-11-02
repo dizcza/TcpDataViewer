@@ -5,7 +5,7 @@
     <string name="save_btn">Save</string>
     <string name="show_saved">Show saved charts</string>
     <string name="tag_save_hint">Tag</string>
-    <string name="ipaddr">192.168.3.62</string>
+    <string name="ipaddr_default">192.168.3.62</string>
     <string name="port_desc">Port</string>
     <string name="tcp_server_ip_address_desc">IP address</string>
     <string name="connect_desc">Connect to TCP server</string>
@@ -16,11 +16,13 @@
     <string name="data_type_desc">Data type</string>
     <string name="byte_desc">byte (int8_t)</string>
     <string name="short_desc">short (int16_t)</string>
-    <string name="data_protocol_dialog">Data protocol</string>
     <string name="int_desc">int (int32_t)</string>
     <string name="float_desc">float</string>
     <string name="data_little_endian_desc">Little-endian</string>
     <string name="data_big_endian_desc">Big-endian</string>
     <string name="data_endian_desc">Endianness</string>
+    <string name="plot_settings">Plot settings</string>
+    <string name="chart_size_desc">Keep last points count</string>
+    <string name="update_period_desc">Update period in ms</string>
 
 </resources>

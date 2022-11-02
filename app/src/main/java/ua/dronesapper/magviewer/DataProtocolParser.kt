@@ -97,8 +97,8 @@ class DataProtocolParser {
 
     fun loadProtocol(context: Context) {
         val sharedPref = Utils.getSharedPref(context)
-        dtype = sharedPref.getInt(Constants.DATA_TYPE_SHARED_KEY, 0)
-        val endianInt = sharedPref.getInt(Constants.ENDIAN_SHARED_KEY, 0)
+        dtype = sharedPref.getInt(SharedKey.DATA_TYPE, 0)
+        val endianInt = sharedPref.getInt(SharedKey.ENDIAN, 0)
         endian = if (endianInt == 0) ByteOrder.BIG_ENDIAN else ByteOrder.LITTLE_ENDIAN
     }
 }
