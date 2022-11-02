@@ -24,7 +24,11 @@ interface Constants {
         const val DEQUEUE_SIZE = 100
         const val RECORDS_FOLDER = "SensorRecords"
         const val SHARED_KEY_FILE = "ua.dronesapper.magviewer.SHARED_KEY"
+
         const val SERVER_IPADDR_SHARED_KEY = "server_ipaddr"
         const val SERVER_PORT_SHARED_KEY = "server_port"
+
+        const val DATA_TYPE_SHARED_KEY = "data_type"
+        const val ENDIAN_SHARED_KEY = "data_endian"
     }
 }

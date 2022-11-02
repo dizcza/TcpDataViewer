@@ -26,4 +26,9 @@
         android:title="@string/connect_desc"
         app:showAsAction="never" />
 
+    <item
+        android:id="@+id/data_protocol_dialog"
+        android:title="@string/data_protocol_dialog"
+        app:showAsAction="never" />
+
 </menu>

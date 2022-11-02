@@ -24,10 +24,7 @@ import android.os.*
 import android.provider.Settings
 import android.util.Log
 import android.view.*
-import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -166,6 +163,35 @@ class MainFragment : FragmentWritePermissionManager() {
     }
 
     @SuppressLint("ApplySharedPref")
+    private fun createDataProtocolDialog(): AlertDialog {
+        mLineChart.pause()
+        val sharedPref: SharedPreferences = Utils.getSharedPref(requireContext())
+
+        val builder: AlertDialog.Builder = AlertDialog.Builder(requireContext())
+        val dialogView: View = layoutInflater.inflate(R.layout.dialog_data_type, null)
+
+        Utils.radioGroupLoadChecked(dialogView, R.id.data_type, Constants.DATA_TYPE_SHARED_KEY)
+        Utils.radioGroupLoadChecked(dialogView, R.id.data_endian, Constants.ENDIAN_SHARED_KEY)
+
+        builder.setView(dialogView)
+            .setPositiveButton(
+                R.string.dialog_data_protocol_save
+            ) { _, _ ->
+                val editor = sharedPref.edit()
+                Utils.radioGroupSaveChecked(dialogView, R.id.data_type, Constants.DATA_TYPE_SHARED_KEY, editor)
+                Utils.radioGroupSaveChecked(dialogView, R.id.data_endian, Constants.ENDIAN_SHARED_KEY, editor)
+                editor.commit()
+                mLineChart.onDataProtocolUpdated()
+            }
+            .setNegativeButton(
+                R.string.dialog_cancel
+            ) { dialog, _ -> dialog.cancel()
+                mLineChart.clear()
+            }
+        return builder.create()
+    }
+
+    @SuppressLint("ApplySharedPref")
     private fun createConnectDialog(): AlertDialog {
         if (mBound) {
             requireContext().unbindService(mServiceConnection)
@@ -278,6 +304,10 @@ class MainFragment : FragmentWritePermissionManager() {
             }
             R.id.connect_dialog -> {
                 createConnectDialog().show()
+                return true
+            }
+            R.id.data_protocol_dialog -> {
+                createDataProtocolDialog().show()
                 return true
             }
         }

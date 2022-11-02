@@ -11,5 +11,16 @@
     <string name="connect_desc">Connect to TCP server</string>
     <string name="dialog_cancel">Cancel</string>
     <string name="dialog_connect">Save and connect</string>
+    <string name="dialog_data_protocol_save">Save and apply</string>
+    <string name="data_protocol">Data protocol</string>
+    <string name="data_type_desc">Data type</string>
+    <string name="byte_desc">byte (int8_t)</string>
+    <string name="short_desc">short (int16_t)</string>
+    <string name="data_protocol_dialog">Data protocol</string>
+    <string name="int_desc">int (int32_t)</string>
+    <string name="float_desc">float</string>
+    <string name="data_little_endian_desc">Little-endian</string>
+    <string name="data_big_endian_desc">Big-endian</string>
+    <string name="data_endian_desc">Endianness</string>
 
 </resources>

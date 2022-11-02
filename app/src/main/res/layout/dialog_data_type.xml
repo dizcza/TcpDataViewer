@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" >
+
+    <TextView
+        android:text="@string/data_protocol"
+        android:textSize="20sp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"/>
+
+    <TextView
+        android:text="@string/data_type_desc"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <RadioGroup
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_gravity="start"
+        android:id="@+id/data_type">
+
+        <RadioButton
+            android:layout_width="match_parent"
+            android:layout_weight="1"
+            android:layout_height="0dp"
+            android:text="@string/byte_desc"
+            android:id="@+id/data_type_byte"
+            android:checked="true" />
+
+        <RadioButton
+            android:layout_width="match_parent"
+            android:layout_weight="1"
+            android:layout_height="0dp"
+            android:text="@string/short_desc"
+            android:id="@+id/data_type_short"
+            android:checked="false" />
+
+        <RadioButton
+            android:layout_width="match_parent"
+            android:layout_weight="1"
+            android:layout_height="0dp"
+            android:text="@string/int_desc"
+            android:id="@+id/data_type_int"
+            android:checked="false" />
+
+        <RadioButton
+            android:layout_width="match_parent"
+            android:layout_weight="1"
+            android:layout_height="0dp"
+            android:text="@string/float_desc"
+            android:id="@+id/data_type_float"
+            android:checked="false" />
+    </RadioGroup>
+
+    <TextView
+        android:text="@string/data_endian_desc"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <RadioGroup
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_gravity="start"
+        android:id="@+id/data_endian">
+
+        <RadioButton
+            android:layout_width="match_parent"
+            android:layout_weight="1"
+            android:layout_height="0dp"
+            android:text="@string/data_big_endian_desc"
+            android:id="@+id/data_big_endian"
+            android:checked="true" />
+
+        <RadioButton
+            android:layout_width="match_parent"
+            android:layout_weight="1"
+            android:layout_height="0dp"
+            android:text="@string/data_little_endian_desc"
+            android:id="@+id/data_little_endian"
+            android:checked="false" />
+    </RadioGroup>
+
+</LinearLayout>
