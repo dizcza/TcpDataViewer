@@ -1,4 +1,4 @@
-package ua.dronesapper.magviewer
+package ua.dronesapper.tcpdataviewer
 
 import android.content.Context
 import android.content.SharedPreferences

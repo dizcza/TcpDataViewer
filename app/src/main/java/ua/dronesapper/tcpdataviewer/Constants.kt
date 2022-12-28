@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ua.dronesapper.magviewer
+package ua.dronesapper.tcpdataviewer
 
 object SharedKey {
     const val SERVER_IPADDR = "server_ipaddr"
@@ -32,5 +32,5 @@ object SharedKey {
 object Constants {
     const val BUFFER_SIZE = 1024
     const val RECORDS_FOLDER = "SensorRecords"
-    const val SHARED_KEY_FILE = "ua.dronesapper.magviewer.SHARED_KEY"
+    const val SHARED_KEY_FILE = "ua.dronesapper.tcpdataviewer.SHARED_KEY"
 }

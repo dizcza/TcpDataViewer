@@ -1,4 +1,4 @@
-package ua.dronesapper.magviewer
+package ua.dronesapper.tcpdataviewer
 
 import android.app.Service
 import android.content.Intent

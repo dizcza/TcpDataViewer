@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'ua.dronesapper.magviewer'
+    namespace 'ua.dronesapper.tcpdataviewer'
     compileSdk 33
 
     defaultConfig {
-        applicationId "ua.dronesapper.magviewer"
+        applicationId "ua.dronesapper.tcpdataviewer"
         minSdk 21
         //noinspection ExpiredTargetSdkVersion
         targetSdk 30

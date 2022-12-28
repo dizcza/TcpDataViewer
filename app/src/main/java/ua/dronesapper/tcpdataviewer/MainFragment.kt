@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ua.dronesapper.magviewer
+package ua.dronesapper.tcpdataviewer
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -32,7 +32,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
-import ua.dronesapper.magviewer.TcpClientService.TcpBinder
+import ua.dronesapper.tcpdataviewer.TcpClientService.TcpBinder
 import java.util.*
 
 

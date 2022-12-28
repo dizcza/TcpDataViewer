@@ -9,7 +9,7 @@
     android:padding="@dimen/padding_global"
     tools:context=".MainFragment">
 
-    <ua.dronesapper.magviewer.SensorLineChart
+    <ua.dronesapper.tcpdataviewer.SensorLineChart
         android:layout_weight="1"
         android:layout_width="match_parent"
         android:layout_height="0dp"
