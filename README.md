@@ -14,14 +14,16 @@ Specify TCP server IP address and port number.
 
 ### Data protocol
 
-Specify data type (`int8_t`, `int_16_t`, `int32_t`, `float`) and endianness (big/little).
+Specify data type and endianness (big/little).
 
 #### Supported binary data types
 
 * `int8_t`
 * `int16_t`
 * `int32_t`
+* `int64_t`
 * `float`
+* `double`
 
 ### Plot settings
 

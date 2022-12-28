@@ -5,8 +5,10 @@ import com.github.mikephil.charting.data.Entry
 import java.nio.Buffer
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.nio.DoubleBuffer
 import java.nio.FloatBuffer
 import java.nio.IntBuffer
+import java.nio.LongBuffer
 import java.nio.ShortBuffer
 
 
@@ -19,7 +21,7 @@ class DataProtocolParser {
     var bytes: ByteArray = ByteArray(0)
 
     fun receive(data : ByteArray) : List<Entry> {
-        if (dtype == 0) {
+        if (dtype == DataTypeIndex.BYTE) {
             // raw bytes
             return parseBytes(data)
         }
@@ -52,8 +54,12 @@ class DataProtocolParser {
                 yVal = buffer.get().toFloat()
             } else if (buffer is IntBuffer) {
                 yVal = buffer.get().toFloat()
+            } else if (buffer is LongBuffer) {
+                yVal = buffer.get().toFloat()
             } else if (buffer is FloatBuffer) {
                 yVal = buffer.get()
+            } else if (buffer is DoubleBuffer) {
+                yVal = buffer.get().toFloat()
             } else {
                 throw java.lang.RuntimeException("Unsupported buffer: ${buffer.javaClass.simpleName}")
             }
@@ -67,27 +73,32 @@ class DataProtocolParser {
     }
 
     private fun parseInts() : List<Entry> {
-        val bufferBytes = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+        val bufferBytes = ByteBuffer.wrap(bytes).order(endian)
         val entries: List<Entry>
         val dtypeSize: Int
         when (dtype) {
-            1 -> {
-                // short
+            DataTypeIndex.SHORT -> {
                 dtypeSize = 2
                 entries = getEntriesFromBuffer(bufferBytes.asShortBuffer())
             }
-            2 -> {
-                // int
+            DataTypeIndex.INT -> {
                 dtypeSize = 4
                 entries = getEntriesFromBuffer(bufferBytes.asIntBuffer())
             }
-            3 -> {
-                // float
+            DataTypeIndex.LONG -> {
+                dtypeSize = 8
+                entries = getEntriesFromBuffer(bufferBytes.asLongBuffer())
+            }
+            DataTypeIndex.FLOAT -> {
                 dtypeSize = 4
                 entries = getEntriesFromBuffer(bufferBytes.asFloatBuffer())
             }
+            DataTypeIndex.DOUBLE -> {
+                dtypeSize = 8
+                entries = getEntriesFromBuffer(bufferBytes.asDoubleBuffer())
+            }
             else -> {
-                throw java.lang.RuntimeException("Unsupported data type: $dtype")
+                throw java.lang.RuntimeException("Unsupported data type index: $dtype")
             }
         }
         val start = entries.size * dtypeSize

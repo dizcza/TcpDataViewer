@@ -52,9 +52,26 @@
             android:layout_width="match_parent"
             android:layout_weight="1"
             android:layout_height="0dp"
+            android:text="@string/long_desc"
+            android:id="@+id/data_type_long"
+            android:checked="false" />
+
+        <RadioButton
+            android:layout_width="match_parent"
+            android:layout_weight="1"
+            android:layout_height="0dp"
             android:text="@string/float_desc"
             android:id="@+id/data_type_float"
             android:checked="false" />
+
+        <RadioButton
+            android:layout_width="match_parent"
+            android:layout_weight="1"
+            android:layout_height="0dp"
+            android:text="@string/double_desc"
+            android:id="@+id/data_type_double"
+            android:checked="false" />
+
     </RadioGroup>
 
     <TextView

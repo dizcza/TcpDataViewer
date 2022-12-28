@@ -17,7 +17,9 @@
     <string name="byte_desc">byte (int8_t)</string>
     <string name="short_desc">short (int16_t)</string>
     <string name="int_desc">int (int32_t)</string>
+    <string name="long_desc">long (int64_t)</string>
     <string name="float_desc">float</string>
+    <string name="double_desc">double</string>
     <string name="data_little_endian_desc">Little-endian</string>
     <string name="data_big_endian_desc">Big-endian</string>
     <string name="data_endian_desc">Endianness</string>

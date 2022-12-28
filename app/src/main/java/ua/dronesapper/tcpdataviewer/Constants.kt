@@ -27,6 +27,18 @@ object SharedKey {
 }
 
 /**
+ * Must match with the order of radio buttons in dialog_data_type.xml
+ */
+object DataTypeIndex {
+    const val BYTE = 0
+    const val SHORT = 1
+    const val INT = 2
+    const val LONG = 3
+    const val FLOAT = 4
+    const val DOUBLE = 5
+}
+
+/**
  * Defines several constants used between the service and UI.
  */
 object Constants {
