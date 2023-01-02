@@ -2,6 +2,7 @@ package ua.dronesapper.tcpdataviewer
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.widget.Toast
@@ -74,6 +75,8 @@ class SensorLineChart : LineChart, OnChartGestureListener {
         mDataProtocolParser.loadProtocol(context)
         mPlotSizeMax = Utils.getInteger(context, SharedKey.PLOT_KEEP_LAST_COUNT)
         mUpdatePeriod = Utils.getInteger(context, SharedKey.PLOT_UPDATE_PERIOD)
+        xAxis.textColor = Color.WHITE
+        axisLeft.textColor = Color.WHITE
     }
 
     @Synchronized
@@ -201,6 +204,6 @@ class SensorLineChart : LineChart, OnChartGestureListener {
     }
 
     companion object {
-        private const val CHART_LABEL = "Magnetic field diff, uT"
+        private const val CHART_LABEL = "Data"
     }
 }
